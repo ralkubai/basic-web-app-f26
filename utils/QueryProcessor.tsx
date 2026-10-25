@@ -19,5 +19,19 @@ export default function QueryProcessor(query: string): string {
     return "ralkubai";
   }
 
+  if (query.toLowerCase().includes("plus")) {
+    const nums = query.match(/\d+/g);
+    if (nums) {
+      return String(nums.map(Number).reduce((a, b) => a + b, 0));
+    }
+  }
+
+  if (query.toLowerCase().includes("largest")) {
+    const nums = query.match(/\d+/g);
+    if (nums) {
+      return String(Math.max(...nums.map(Number)));
+    }
+  }
+
   return "";
 }
