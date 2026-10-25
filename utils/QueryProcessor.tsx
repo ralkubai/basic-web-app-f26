@@ -98,5 +98,31 @@ export default function QueryProcessor(query: string): string {
   if (query.toLowerCase().includes("plus") && query.toLowerCase().includes("multiplied")) {
     // handle explicitly — order of operations matters
   }
+
+  if (query.toLowerCase().includes("multiplied") || query.toLowerCase().includes("plus") || query.toLowerCase().includes("minus")) {
+    const tokens = query.toLowerCase().match(/\d+|plus|minus|multiplied/g);
+    if (tokens) {
+      // first pass: multiplication
+      const pass1: (string)[] = [];
+      for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i] === "multiplied") {
+          const left = Number(pass1.pop());
+          const right = Number(tokens[++i + 1]);
+          i++;
+          pass1.push(String(left * right));
+        } else {
+          pass1.push(tokens[i]);
+        }
+      }
+      // second pass: addition and subtraction, left to right
+      let result = Number(pass1[0]);
+      for (let i = 1; i < pass1.length; i += 2) {
+        const n = Number(pass1[i + 1]);
+        if (pass1[i] === "plus") result += n;
+        else if (pass1[i] === "minus") result -= n;
+      }
+      return String(result);
+    }
+  }
   return "";
 }
