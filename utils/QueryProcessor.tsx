@@ -65,5 +65,22 @@ export default function QueryProcessor(query: string): string {
       return nums.map(Number).filter(isPrime).join(", ");
     }
   }
+
+  if (query.toLowerCase().includes("power")) {
+    const nums = query.match(/\d+/g);
+    if (nums && nums.length >= 2) {
+      return (BigInt(nums[0]) ** BigInt(nums[1])).toString();
+    }
+  }
+
+  if (query.toLowerCase().includes("fibonacci")) {
+    const nums = query.match(/\d+/g);
+    if (nums) {
+      const n = Number(nums[0]);
+      let a = 1n, b = 1n;
+      for (let i = 1; i < n; i++) [a, b] = [b, a + b];
+      return a.toString();
+    }
+  }
   return "";
 }
