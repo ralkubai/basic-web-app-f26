@@ -16,7 +16,10 @@ export default function QueryProcessor(query: string): string {
 
   if (q.includes("power")) {
     const raw = query.match(/\d+/g);
-    if (raw && raw.length >= 2) return (BigInt(raw[0]) ** BigInt(raw[1])).toString();
+    if (raw && raw.length >= 2) {
+      return (BigInt(raw[0]) ** BigInt(raw[1])).toString();
+    }
+    return "";
   }
 
   if (q.includes("square") && q.includes("cube")) {
@@ -75,6 +78,17 @@ export default function QueryProcessor(query: string): string {
         else if (pass1[i] === "minus") result -= n;
       }
       return String(result);
+    }
+  }
+  const pass1: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i] === "multiplied") {
+      const left = Number(pass1.pop());
+      const right = Number(tokens[i + 1]);
+      pass1.push(String(left * right));
+      i++;
+    } else {
+      pass1.push(tokens[i]);
     }
   }
 
