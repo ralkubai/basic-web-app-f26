@@ -1,6 +1,6 @@
 export default function QueryProcessor(query: string): string {
   const q = query.toLowerCase();
-  const nums = query.match(/\d+/g)?.map(Number) ?? [];
+  const nums = (query.match(/\d+/g) ?? []).map(Number);
 
   if (q.includes("shakespeare")) {
     return (
@@ -14,17 +14,45 @@ export default function QueryProcessor(query: string): string {
   if (q.includes("name")) return "ralkubai";
   if (q.includes("age")) return "67";
 
+  // anagram: "Which of the following is an anagram of admirer: border, random, ..."
+  if (q.includes("anagram")) {
+    const m = q.match(/anagram of (\w+)\s*:\s*(.+?)\??$/);
+    if (m) {
+      const target = m[1].split("").sort().join("");
+      const options = m[2].split(/,\s*/).map(s => s.trim());
+      const hit = options.find(
+        o => o !== m[1] && o.split("").sort().join("") === target
+      );
+      if (hit) return hit;
+    }
+  }
+
+  // scrabble: "What is the scrabble score of zoo?"
+  if (q.includes("scrabble")) {
+    const scores: Record<string, number> = {
+      a:1,b:3,c:3,d:2,e:1,f:4,g:2,h:4,i:1,j:8,k:5,l:1,m:3,
+      n:1,o:1,p:3,q:10,r:1,s:1,t:1,u:1,v:4,w:4,x:8,y:4,z:10
+    };
+    const m = q.match(/score of ([a-z]+)/);
+    if (m) {
+      return String(
+        m[1].split("").reduce((s, ch) => s + (scores[ch] ?? 0), 0)
+      );
+    }
+  }
+
+  // power: BigInt, exponents get huge
   if (q.includes("power")) {
     const raw = query.match(/\d+/g);
     if (raw && raw.length >= 2) {
       return (BigInt(raw[0]) ** BigInt(raw[1])).toString();
     }
-    return "";
   }
 
   if (q.includes("square") && q.includes("cube")) {
     const hit = nums.find(n => {
-      const r = Math.sqrt(n), c = Math.cbrt(n);
+      const r = Math.sqrt(n);
+      const c = Math.cbrt(n);
       return Number.isInteger(r) && Math.abs(c - Math.round(c)) < 1e-9;
     });
     if (hit !== undefined) return String(hit);
@@ -47,48 +75,30 @@ export default function QueryProcessor(query: string): string {
     return a.toString();
   }
 
-  if (q.includes("scrabble")) {
-    const scores: Record<string, number> = {
-      a:1,b:3,c:3,d:2,e:1,f:4,g:2,h:4,i:1,j:8,k:5,l:1,m:3,
-      n:1,o:1,p:3,q:10,r:1,s:1,t:1,u:1,v:4,w:4,x:8,y:4,z:10
-    };
-    const m = query.match(/"([^"]+)"|for ([a-zA-Z]+)/);
-    const w = m?.[1] ?? m?.[2];
-    if (w) return String(w.toLowerCase().split("").reduce((s, ch) => s + (scores[ch] ?? 0), 0));
-  }
-
+  // arithmetic with precedence: multiplication before plus/minus
   if (q.includes("plus") || q.includes("minus") || q.includes("multiplied")) {
     const tokens = q.match(/\d+|plus|minus|multiplied/g);
     if (tokens) {
-      const pass1: string[] = [];
-      for (let i = 0; i < tokens.length; i++) {
+      const reduced: string[] = [];
+      let i = 0;
+      while (i < tokens.length) {
         if (tokens[i] === "multiplied") {
-          const left = Number(pass1.pop());
+          const left = Number(reduced.pop());
           const right = Number(tokens[i + 1]);
-          i++;
-          pass1.push(String(left * right));
+          reduced.push(String(left * right));
+          i += 2;
         } else {
-          pass1.push(tokens[i]);
+          reduced.push(tokens[i]);
+          i += 1;
         }
       }
-      let result = Number(pass1[0]);
-      for (let i = 1; i < pass1.length; i += 2) {
-        const n = Number(pass1[i + 1]);
-        if (pass1[i] === "plus") result += n;
-        else if (pass1[i] === "minus") result -= n;
+      let result = Number(reduced[0]);
+      for (let j = 1; j < reduced.length - 1; j += 2) {
+        const n = Number(reduced[j + 1]);
+        if (reduced[j] === "plus") result += n;
+        else if (reduced[j] === "minus") result -= n;
       }
       return String(result);
-    }
-  }
-  const pass1: string[] = [];
-  for (let i = 0; i < tokens.length; i++) {
-    if (tokens[i] === "multiplied") {
-      const left = Number(pass1.pop());
-      const right = Number(tokens[i + 1]);
-      pass1.push(String(left * right));
-      i++;
-    } else {
-      pass1.push(tokens[i]);
     }
   }
 
