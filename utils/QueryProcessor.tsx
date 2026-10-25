@@ -82,5 +82,21 @@ export default function QueryProcessor(query: string): string {
       return a.toString();
     }
   }
+  if (query.toLowerCase().includes("scrabble")) {
+    const scores: Record<string, number> = {
+      a:1,b:3,c:3,d:2,e:1,f:4,g:2,h:4,i:1,j:8,k:5,l:1,m:3,
+      n:1,o:1,p:3,q:10,r:1,s:1,t:1,u:1,v:4,w:4,x:8,y:4,z:10
+    };
+    const word = query.match(/"([^"]+)"|for ([a-zA-Z]+)/);
+    const w = word?.[1] ?? word?.[2];
+    if (w) {
+      return String(
+        w.toLowerCase().split("").reduce((sum, ch) => sum + (scores[ch] ?? 0), 0)
+      );
+    }
+  }
+  if (query.toLowerCase().includes("plus") && query.toLowerCase().includes("multiplied")) {
+    // handle explicitly — order of operations matters
+  }
   return "";
 }
